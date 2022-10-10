@@ -30,11 +30,11 @@ namespace ECatalogueApi.Controllers
         /// <returns>Created Teacher Data</returns>
 
         [HttpPost()]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<TeacherToGet>))]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(List<TeacherToGet>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         public IActionResult CreateTeacher([FromBody] TeacherToCreate teacherToCreate)
         {
-            return Ok(dataLayer.CreateTeacher(teacherToCreate.ToEntity()).ToDto());
+            return Created("Successfully created",dataLayer.CreateTeacher(teacherToCreate.ToEntity()).ToDto());
         }
         /// <summary>
         /// Add a subject to a teacher.
@@ -42,7 +42,7 @@ namespace ECatalogueApi.Controllers
         /// <param name="teacherId">Teacher Id</param>
         /// <param name="subjectToCreate">Subject Data</param>
         [HttpPost("{teacherId}/addsubject")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(List<TeacherToGet>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         public IActionResult AddSubjectToTeacher([FromRoute] int teacherId, [FromBody] SubjectToCreate subjectToCreate)
         {
@@ -54,7 +54,7 @@ namespace ECatalogueApi.Controllers
             {
                 return NotFound(e.Message);
             }
-            return Ok();
+            return Created("Subect added to the teacher sucessfully", dataLayer.AddSubjectToTeacher(teacherId, subjectToCreate.ToEntity()).ToDto());
         }
         #endregion
     #region Delete Method
@@ -80,8 +80,9 @@ namespace ECatalogueApi.Controllers
         /// <param name="newAddress">Address Data</param>
         /// <returns>Modified teacher data.</returns>
         [HttpPut("{teacherId}/addressChange")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<TeacherToUpdate>))]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(List<TeacherToGet>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
         public IActionResult ChangeTeacherAddress([FromRoute] int teacherId, [Required][FromBody] AddressToUpdate newAddress)
         {
             try
@@ -92,7 +93,7 @@ namespace ECatalogueApi.Controllers
             {
                 return NotFound(e.Message);
             }
-            return Ok();
+            return Created("Successfully updated",newAddress);
         }
         #endregion
     #region Promotion Method
@@ -102,6 +103,9 @@ namespace ECatalogueApi.Controllers
         /// <param name="teacherId">Teacher Id</param>
         /// <param name="promotion">Do you wish to promote the teacher? (True = Yes / False = No)</param>
         /// <returns>Modifed rank for the teacher.</returns>
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(List<TeacherToGet>))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
         [HttpPut("{teacherId}/promotion")]
         public IActionResult PromoteTeacher([FromRoute] int teacherId, [FromQuery] bool promotion)
         {
@@ -113,7 +117,7 @@ namespace ECatalogueApi.Controllers
             {
                 return NotFound(e.Message);
             }
-            return Ok();
+            return Created("Promotion request updated successfully", promotion);
         }
     }
 }

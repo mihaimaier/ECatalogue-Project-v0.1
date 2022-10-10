@@ -135,7 +135,8 @@ namespace ECatalogueApi.Controllers
         /// <param name="studentId">Insert ID of Student To Modify</param>
         /// <param name="newStudentData">New Student Information</param>
         [HttpPut("{studentId}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<StudentToUpdate>))]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(List<StudentToGet>))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
         public IActionResult UpadateStudent([FromRoute] int studentId, [FromBody] StudentToUpdate newStudentData)
         {
             try
@@ -146,7 +147,7 @@ namespace ECatalogueApi.Controllers
             {
                 return NotFound(e.Message);
             }
-            return Ok();
+            return Created("Successfully updated",newStudentData);
         }
 
         /// <summary>
@@ -156,8 +157,9 @@ namespace ECatalogueApi.Controllers
         /// <param name="newAddress">New Address</param>
         /// <returns>Modified student data.</returns>
         [HttpPut("{studentId}/address")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<StudentToUpdate>))]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(List<AddressToGet>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
         public IActionResult ChangeStudentAddress([FromRoute] int studentId, [Required][FromBody] AddressToUpdate newAddress)
         {
             try
@@ -168,7 +170,7 @@ namespace ECatalogueApi.Controllers
             {
                 return NotFound(e.Message);
             }
-            return Ok();
+            return Created("Successfully updated",newAddress);
         }
         #endregion
         #region Create/Addition Methods
@@ -178,10 +180,10 @@ namespace ECatalogueApi.Controllers
         /// <param name="studentToCreate">Student Data</param>
         /// <returns>New Created Student</returns>
         [HttpPost()]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<StudentToGet>))]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(List<StudentToGet>))]
         public IActionResult CreateStudent([FromBody] StudentToCreate studentToCreate)
         {
-            return Ok(dataLayer.CreateStudent(studentToCreate.ToEntity()).ToDto());
+            return Created("Successfully Created",dataLayer.CreateStudent(studentToCreate.ToEntity()).ToDto());
         }
 
         /// <summary>

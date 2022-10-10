@@ -9,7 +9,8 @@ namespace ECatalogueApi.Extensions
         public static Subject ToEntity(this SubjectToCreate subjectToCreate) =>
         new Subject
         {
-            Name = subjectToCreate.Name
+            Name = subjectToCreate.Name,
+            TeacherId = subjectToCreate.TeacherId
         };
         public static Student ToEntity(this StudentToCreate studentToCreate) =>
         new Student

@@ -20,17 +20,17 @@ namespace ECatalogueApi.Controllers
             this.context = context;
         }
         #endregion
-    #region Add Method
+    #region Create Method
         /// <summary>
-        /// Adds a new subject to the system.
+        /// Creates or updates a subject.
         /// </summary>
         /// <param name="subject">Subject Data</param>
         /// <returns>Created subject data.</returns>
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<SubjectToGet>))]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(List<SubjectToGet>))]
         public IActionResult AddCourse([FromBody] SubjectToCreate subject)
         {
-            return Ok(dataLayer.AddSubject(subject.Name).ToDto());
+            return Created("Successfully Created", dataLayer.AddSubject(subject.ToEntity()).ToDto());
         }
         #endregion
     #region Delete Method

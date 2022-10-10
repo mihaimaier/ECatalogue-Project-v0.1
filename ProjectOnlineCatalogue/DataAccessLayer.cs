@@ -200,13 +200,42 @@ namespace ProjectOnlineCatalogue
             ctx.SaveChanges();
         }
         // Add Subject
-        public Subject AddSubject(string subjectName)
+        public Subject AddSubject(Subject newSubject)
         {
-            var subject = new Subject {Name = subjectName};
+            if (ctx.Subjects.Any(s => s.Name == newSubject.Name))
+            {
+                var existingSubject = ctx.Subjects.First(s => s.Name == newSubject.Name);
+
+                if (ctx.Teachers.Any(t => t.Id == newSubject.TeacherId) && (existingSubject.TeacherId != newSubject.TeacherId))
+                {
+                    ctx.Subjects.First(s => s.TeacherId == newSubject.TeacherId);
+
+                    var existingTeacherToRemove = ctx.Teachers.FirstOrDefault(t => t.Id == existingSubject.TeacherId);
+
+                    if (existingTeacherToRemove != null)
+                    {
+                        ctx.Teachers.Remove(existingTeacherToRemove);
+                    }
+                    existingSubject.TeacherId = newSubject.TeacherId;
+                }
+                ctx.SaveChanges();
+                return existingSubject;
+            }
+
+            Subject subject = new Subject();
+            subject.Name = newSubject.Name;
+
+            if (ctx.Teachers.Any(t => t.Id == newSubject.TeacherId))
+            {
+                ctx.Subjects.First(s => s.TeacherId == newSubject.TeacherId);
+                subject.TeacherId = newSubject.TeacherId;
+            }
+
             ctx.Subjects.Add(subject);
             ctx.SaveChanges();
             return subject;
         }
+
         //Add Subject to Teacher
         public Subject AddSubjectToTeacher(int teacherId, Subject subjectToCreate)
         {

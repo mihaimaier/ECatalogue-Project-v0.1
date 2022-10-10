@@ -36,19 +36,14 @@ namespace ECatalogueApi.Extensions
         }
         public static SubjectToGet ToDto(this Subject subject)
         {
-            if(subject == null)
-                return null;
-
-            SubjectToGet dto = new SubjectToGet();
+            if (subject.TeacherId == null)
             {
-                dto.Id = subject.Id;
-                dto.Name = subject.Name;
-                dto.TeacherId = subject.TeacherId;
-
-                return dto;
-            };
+                return new SubjectToGet { Name = subject.Name, TeacherId = 0 };
+            }
+            return new SubjectToGet { Name = subject.Name, TeacherId = (int)subject.TeacherId };
         }
-        public static MarkToGet ToDto(this Mark mark)
+
+            public static MarkToGet ToDto(this Mark mark)
         {
             if (mark == null)
                 return null;
