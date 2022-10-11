@@ -2,6 +2,7 @@
 using ProjectOnlineCatalogue.Models;
 using ProjectOnlineCatalogueData.Exceptions;
 using ProjectOnlineCatalogueData.Models;
+using System.Dynamic;
 
 namespace ProjectOnlineCatalogue
 {
@@ -165,6 +166,17 @@ namespace ProjectOnlineCatalogue
 
             ctx.SaveChanges();
         }
+        // Modify Teacher Subject
+        public Subject ModifyTeacherSubject(int teacherId, string newSubjectName)
+        {
+            if (!ctx.Teachers.Any(t => t.Id == teacherId))
+            {
+                throw new EntityNotFoundException(teacherId);
+            }
+
+            Subject newSubject = new Subject { Name = newSubjectName, TeacherId = teacherId };
+            return AddSubject(newSubject);
+        }
         //Promotion of Teacher
         public void PromoteTeacher(int teacherId, bool promotion)
         {
@@ -179,12 +191,40 @@ namespace ProjectOnlineCatalogue
             }
             else
             {
-                teacher.Rank--;
+                teacher.Rank = teacher.Rank;
             }
             ctx.SaveChanges();
         }
+        //Get Marks By Teacher
+        public List<Mark> GetMarksByTeacher(int teacherId)
+        {
+            return ctx.Marks.Where(m => m.Id == teacherId).ToList();
+        }
+        //Gets all teachers
+        public List<Teacher> GetAllTeachers()
+        {
+            return ctx.Teachers.Include(t => t.Address).Include(t => t.Subject).ToList();
+        }
+        //Get Teacher By Id
+        public Teacher GetTeacherById(int teacherId)
+        {
+            if (!ctx.Teachers.Any(t => t.Id == teacherId))
+            {
+                throw new EntityNotFoundException(teacherId);
+            }
+            return ctx.Teachers.Include(t => t.Address).Include(t => t.Subject).First(t => t.Id == teacherId);
+        }
         #endregion
     #region Subject Methods
+        // Get Subject By Id
+        public Subject GetSubjectById(int subjectId)
+        {
+            if (!ctx.Subjects.Any(s => s.Id == subjectId))
+            {
+                throw new EntityNotFoundException(subjectId);
+            }
+            return ctx.Subjects.First(s => s.Id == subjectId);
+        }
         //Delete Subject
         public void DeleteSubject(int subjectId)
         {

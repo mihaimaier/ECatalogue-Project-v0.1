@@ -43,7 +43,7 @@ namespace ECatalogueApi.Extensions
             return new SubjectToGet { Name = subject.Name, TeacherId = (int)subject.TeacherId };
         }
 
-            public static MarkToGet ToDto(this Mark mark)
+        public static MarkToGet ToDto(this Mark mark)
         {
             if (mark == null)
                 return null;
@@ -59,18 +59,37 @@ namespace ECatalogueApi.Extensions
         }
         public static TeacherToGet ToDto(this Teacher teacher)
         {
-            if(teacher == null)
+            if (teacher.Address == null)
             {
-                return null;
+                return new TeacherToGet
+                {
+                    Name = teacher.Name,
+                    Rank = teacher.Rank,
+                    Subject = teacher.Subject,
+                    City = null,
+                    Street = null,
+                    Number = null
+                };
             }
-            TeacherToGet dto = new TeacherToGet();
-            dto.Id = teacher.Id;
-            dto.Name = teacher.Name;
-            dto.Rank = teacher.Rank;
-            dto.Address = teacher.Address;
-            dto.Subject = teacher.Subject;
 
-            return dto;
+            return new TeacherToGet
+            {
+                Name = teacher.Name,
+                Rank = teacher.Rank,
+                Subject = teacher.Subject,
+                City = teacher.Address.City,
+                Street = teacher.Address.Street,
+                Number = teacher.Address.Number
+            };
+        }
+        public static MarksByTeacherToGet ToDtoMarksByTeacher(this Mark mark)
+        {
+            return new MarksByTeacherToGet
+            {
+                Value = mark.Value,
+                StudentId = mark.StudentId,
+                CreationDate = mark.CreationDate.ToString(),
+            };
         }
     }
 }

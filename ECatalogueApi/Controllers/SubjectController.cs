@@ -3,6 +3,8 @@ using ECatalogueApi.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using ProjectOnlineCatalogue;
 using ProjectOnlineCatalogue.Models;
+using ProjectOnlineCatalogueData.Exceptions;
+using System.ComponentModel.DataAnnotations;
 
 namespace ECatalogueApi.Controllers
 {
@@ -18,6 +20,30 @@ namespace ECatalogueApi.Controllers
         {
             this.dataLayer = dataLayer;
             this.context = context;
+        }
+        #endregion
+    #region Get Method
+        /// <summary>
+        /// Returns a subject by a specified Id.
+        /// </summary>
+        /// <param name="id">Subject's ID</param>
+        /// <returns>Result</returns>
+        [HttpGet("subjects/{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SubjectToGet))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
+        public IActionResult GetSubjectById([FromRoute][Range(1, 200)] int id)
+        {
+            SubjectToGet subject;
+
+            try
+            {
+                subject = dataLayer.GetSubjectById(id).ToDto();
+            }
+            catch (EntityNotFoundException e)
+            {
+                return NotFound(e.Message);
+            }
+            return Ok(subject);
         }
         #endregion
     #region Create Method

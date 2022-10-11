@@ -16,10 +16,56 @@ namespace ECatalogueApi.Controllers
         private readonly DataAccessLayer dataLayer;
         private readonly OnlineCatalogueDbContext context;
 
+
         public TeacherController(DataAccessLayer dataLayer, OnlineCatalogueDbContext context)
         {
             this.dataLayer = dataLayer;
             this.context = context;
+        }
+        #endregion
+    #region Get Methods
+        /// <summary>
+        /// Gets all teachers in the system.
+        /// </summary>
+        /// <returns>List of Teachers.</returns>
+        [HttpGet("all")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<TeacherToGet>))]
+        public IActionResult GetAllTeachers()
+        {
+            return Ok(dataLayer.GetAllTeachers().Select(t => t.ToDto()).ToList());
+        }
+        /// <summary>
+        /// Gets teacher by Id.
+        /// </summary>
+        /// <param name="id">Please input an Id.</param>
+        /// <returns>Returns the specified teacher.</returns>
+        [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TeacherToGet))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
+        public IActionResult GetTeacherById([FromRoute][Range(1,int.MaxValue)] int id)
+        {
+            TeacherToGet teacher;
+
+            try
+            {
+                teacher = dataLayer.GetTeacherById(id).ToDto();
+            }
+            catch (EntityNotFoundException e)
+            {
+                return NotFound(e.Message);
+            }
+            return Ok(teacher);
+        }
+        /// <summary>
+        /// Returns all marks by a teacher
+        /// </summary>
+        /// <param name="id">Teacher's ID</param>
+        /// <returns>Result</returns>
+        [HttpGet("teachers/{id}/marks/all")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<MarksByTeacherToGet>))]
+        public IActionResult GetAllMarksByTeacher([FromRoute][Range(1, int.MaxValue)] int id)
+        {
+            return Ok(dataLayer.GetMarksByTeacher(id).Select(m => m.ToDtoMarksByTeacher()).ToList());
         }
         #endregion
     #region Add Methods
@@ -37,24 +83,26 @@ namespace ECatalogueApi.Controllers
             return Created("Successfully created",dataLayer.CreateTeacher(teacherToCreate.ToEntity()).ToDto());
         }
         /// <summary>
-        /// Add a subject to a teacher.
+        /// Creates or updates a teacher's subject
         /// </summary>
-        /// <param name="teacherId">Teacher Id</param>
-        /// <param name="subjectToCreate">Subject Data</param>
-        [HttpPost("{teacherId}/addsubject")]
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(List<TeacherToGet>))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
-        public IActionResult AddSubjectToTeacher([FromRoute] int teacherId, [FromBody] SubjectToCreate subjectToCreate)
+        /// <param name="id">Teacher's ID</param>
+        /// <param name="newSubjectName">Subject's name</param>
+        /// <returns>Result</returns>
+        [HttpPut("{id}/update/subject")]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(SubjectToGet))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
+        public IActionResult ModifyTeacherSubject([FromRoute][Range(1, int.MaxValue)] int id, [FromBody] string newSubjectName)
         {
+            SubjectToGet subject;
             try
             {
-                dataLayer.AddSubjectToTeacher(teacherId, subjectToCreate.ToEntity()).ToDto();
+                subject = dataLayer.ModifyTeacherSubject(id, newSubjectName).ToDto();
             }
             catch (EntityNotFoundException e)
             {
                 return NotFound(e.Message);
             }
-            return Created("Subect added to the teacher sucessfully", dataLayer.AddSubjectToTeacher(teacherId, subjectToCreate.ToEntity()).ToDto());
+            return Created("Successfully updated", subject);
         }
         #endregion
     #region Delete Method
@@ -103,8 +151,7 @@ namespace ECatalogueApi.Controllers
         /// <param name="teacherId">Teacher Id</param>
         /// <param name="promotion">Do you wish to promote the teacher? (True = Yes / False = No)</param>
         /// <returns>Modifed rank for the teacher.</returns>
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(List<TeacherToGet>))]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
         [HttpPut("{teacherId}/promotion")]
         public IActionResult PromoteTeacher([FromRoute] int teacherId, [FromQuery] bool promotion)
@@ -117,7 +164,12 @@ namespace ECatalogueApi.Controllers
             {
                 return NotFound(e.Message);
             }
-            return Created("Promotion request updated successfully", promotion);
+            if(promotion)
+                return Ok("Teacher promoted sucessfully.");
+            else
+            {
+                return Ok("Teacher did not get promoted.");
+            }
         }
     }
 }
