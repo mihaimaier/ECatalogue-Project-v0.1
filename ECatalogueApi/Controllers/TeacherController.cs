@@ -1,4 +1,5 @@
-﻿using ECatalogueApi.DTO;
+﻿using Abp.Domain.Entities;
+using ECatalogueApi.DTO;
 using ECatalogueApi.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using ProjectOnlineCatalogue;
@@ -57,7 +58,7 @@ namespace ECatalogueApi.Controllers
             return Ok(teacher);
         }
         /// <summary>
-        /// Returns all marks by a teacher
+        /// Returns all marks by a teacher.
         /// </summary>
         /// <param name="id">Teacher's ID</param>
         /// <returns>Result</returns>
@@ -85,18 +86,19 @@ namespace ECatalogueApi.Controllers
         /// <summary>
         /// Creates or updates a teacher's subject
         /// </summary>
-        /// <param name="id">Teacher's ID</param>
+        /// <param name="subjectId">Subject Id</param>
+        /// <param name="teacherId">Teacher Id</param>
         /// <param name="newSubjectName">Subject's name</param>
         /// <returns>Result</returns>
         [HttpPut("{id}/update/subject")]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(SubjectToGet))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
-        public IActionResult ModifyTeacherSubject([FromRoute][Range(1, int.MaxValue)] int id, [FromBody] string newSubjectName)
+        public IActionResult ModifyTeacherSubject([FromRoute][Range(1, int.MaxValue)] int subjectId, [FromRoute][Range(1,int.MaxValue)] int teacherId, [FromBody] string newSubjectName)
         {
             SubjectToGet subject;
             try
             {
-                subject = dataLayer.ModifyTeacherSubject(id, newSubjectName).ToDto();
+                subject = dataLayer.ModifyTeacherSubject(subjectId,teacherId, newSubjectName).ToDto();
             }
             catch (EntityNotFoundException e)
             {
@@ -114,7 +116,7 @@ namespace ECatalogueApi.Controllers
         /// <param name="deleteSubject">Would you like to delete the teacher's subject?</param>
         [HttpDelete("{teacherId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public IActionResult DeleteTeacher([FromRoute] int teacherId, [FromQuery] bool deleteAddress, [FromQuery] bool deleteSubject)
+        public IActionResult DeleteTeacher([FromRoute][Range(1, int.MaxValue)] int teacherId, [FromQuery] bool deleteAddress, [FromQuery] bool deleteSubject)
         {
             dataLayer.DeleteTeacher(teacherId, deleteAddress, deleteSubject);
             return Ok();
@@ -131,7 +133,7 @@ namespace ECatalogueApi.Controllers
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(List<TeacherToGet>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
-        public IActionResult ChangeTeacherAddress([FromRoute] int teacherId, [Required][FromBody] AddressToUpdate newAddress)
+        public IActionResult ChangeTeacherAddress([FromRoute][Range(1,int.MaxValue)] int teacherId, [Required][FromBody] AddressToUpdate newAddress)
         {
             try
             {
@@ -149,26 +151,22 @@ namespace ECatalogueApi.Controllers
         /// Give a teacher a promotion.
         /// </summary>
         /// <param name="teacherId">Teacher Id</param>
-        /// <param name="promotion">Do you wish to promote the teacher? (True = Yes / False = No)</param>
         /// <returns>Modifed rank for the teacher.</returns>
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
         [HttpPut("{teacherId}/promotion")]
-        public IActionResult PromoteTeacher([FromRoute] int teacherId, [FromQuery] bool promotion)
+        public IActionResult PromoteTeacher([FromRoute][Range(1,int.MaxValue)] int teacherId)
         {
             try
             {
-                dataLayer.PromoteTeacher(teacherId, promotion);
+                dataLayer.PromoteTeacher(teacherId);
             }
             catch (EntityNotFoundException e)
             {
                 return NotFound(e.Message);
             }
-            if(promotion)
-                return Ok("Teacher promoted sucessfully.");
-            else
             {
-                return Ok("Teacher did not get promoted.");
+                return Ok("Teacher promoted sucessfully.");
             }
         }
     }

@@ -13,7 +13,7 @@ namespace ECatalogueApi.DTO
 
         public int Age { get; set; }
 
-        public Address Address { get; set; }
+        public AddressToGet Address { get; set; }
 
     }
 }

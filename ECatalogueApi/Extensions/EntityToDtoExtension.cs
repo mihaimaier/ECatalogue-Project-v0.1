@@ -17,7 +17,7 @@ namespace ECatalogueApi.Extensions
             dto.FirstName = student.FirstName;
             dto.LastName = student.LastName;
             dto.Age = student.Age;
-            dto.Address = student.Address;
+            dto.Address = student.Address.ToDto();
 
             return dto;
         }
@@ -38,7 +38,7 @@ namespace ECatalogueApi.Extensions
         {
             if (subject.TeacherId == null)
             {
-                return new SubjectToGet { Name = subject.Name, TeacherId = 0 };
+                return new SubjectToGet { Name = subject.Name, TeacherId = null };
             }
             return new SubjectToGet { Name = subject.Name, TeacherId = (int)subject.TeacherId };
         }

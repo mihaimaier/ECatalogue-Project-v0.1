@@ -7,12 +7,13 @@ using System.ComponentModel.DataAnnotations;
 using ProjectOnlineCatalogueData.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using System.Runtime.InteropServices;
+using Abp.Domain.Entities;
 
 namespace ECatalogueApi.Controllers
 {
     [Route("API/[controller]")]
     [ApiController]
-        #region Constructor
+    #region Constructor
     public class StudentController : Controller
     {
 
@@ -25,7 +26,7 @@ namespace ECatalogueApi.Controllers
             this.context = context;
         }
         #endregion
-        #region Get Methods
+    #region Get Methods
         /// <summary>
         /// Gets all students with their addresses.
         /// </summary>
@@ -43,7 +44,7 @@ namespace ECatalogueApi.Controllers
         [HttpGet("{studentId}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<StudentToGet>))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
-        public IActionResult GetById([FromRoute] int studentId)
+        public IActionResult GetById([FromRoute][Range(1, int.MaxValue)] int studentId)
         {
             var student = dataLayer.GetStudentById(studentId);
             if (student == null)
@@ -60,7 +61,7 @@ namespace ECatalogueApi.Controllers
         /// <returns>List of Marks</returns>
         [HttpGet("{studentId}/marks")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<MarkToGet>))]
-        public IActionResult GetAllMarks([FromRoute] int studentId, [FromQuery] int? subjectId)
+        public IActionResult GetAllMarks([FromRoute][Range(1, int.MaxValue)] int studentId, [FromQuery][Range(1, int.MaxValue)] int? subjectId)
         {
             var student = context.Students.Include(s => s.Marks).FirstOrDefault(s => s.Id == studentId);
             if (student == null)
@@ -85,7 +86,7 @@ namespace ECatalogueApi.Controllers
         [HttpGet("{studentId}/averages/all")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<AverageForSubject>))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
-        public IActionResult GetAveragePerSubject([FromRoute] int studentId)
+        public IActionResult GetAveragePerSubject([FromRoute][Range(1, int.MaxValue)] int studentId)
         {
             var student = context.Students.Include(s => s.Marks).FirstOrDefault(s => s.Id == studentId);
             if (student == null)
@@ -99,15 +100,15 @@ namespace ECatalogueApi.Controllers
         /// <summary>
         /// Gets the students marks ordered by the average.
         /// </summary>
-        /// <param name="orderDescending"></param>
+        /// <param name="order">Order decending(Select True) / Order ascending (Select False)</param>
         /// <returns></returns>
         [HttpGet("all/orderByAverage")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<StudentWithAverageToGet>))]
-        public IActionResult GetAllStudentOrderedByAverage([Optional][FromQuery] bool orderDescending)
+        public IActionResult GetAllStudentOrderedByAverage([Optional][FromQuery] bool order)
         {
             var allStudentsWithMarks = context.Students.Include(s => s.Marks).ToList();
             List<StudentWithAverageToGet> result;
-            if (orderDescending)
+            if (order)
             {
                 result = allStudentsWithMarks.OrderByDescending(s => s.Marks.Average(m => m.Value)).Select(s => new StudentWithAverageToGet(
                 s.Id,
@@ -128,7 +129,7 @@ namespace ECatalogueApi.Controllers
             return Ok(result);
         }
         #endregion
-        #region Update Methods
+    #region Update Methods
         /// <summary>
         /// Updates student's data.
         /// </summary>
@@ -137,7 +138,7 @@ namespace ECatalogueApi.Controllers
         [HttpPut("{studentId}")]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(List<StudentToGet>))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
-        public IActionResult UpadateStudent([FromRoute] int studentId, [FromBody] StudentToUpdate newStudentData)
+        public IActionResult UpadateStudent([FromRoute][Range(1,int.MaxValue)] int studentId, [FromBody] StudentToUpdate newStudentData)
         {
             try
             {
@@ -160,7 +161,7 @@ namespace ECatalogueApi.Controllers
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(List<AddressToGet>))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
-        public IActionResult ChangeStudentAddress([FromRoute] int studentId, [Required][FromBody] AddressToUpdate newAddress)
+        public IActionResult ChangeStudentAddress([FromRoute][Range(1,int.MaxValue)] int studentId, [Required][FromBody] AddressToUpdate newAddress)
         {
             try
             {
@@ -173,12 +174,13 @@ namespace ECatalogueApi.Controllers
             return Created("Successfully updated",newAddress);
         }
         #endregion
-        #region Create/Addition Methods
+    #region Create/Addition Methods
+        
         /// <summary>
-        /// Creates a student based on the data provided.
+        /// Creates a student based on data provided.
         /// </summary>
         /// <param name="studentToCreate">Student Data</param>
-        /// <returns>New Created Student</returns>
+        /// <returns>New Created Student.</returns>
         [HttpPost()]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(List<StudentToGet>))]
         public IActionResult CreateStudent([FromBody] StudentToCreate studentToCreate)
@@ -190,15 +192,16 @@ namespace ECatalogueApi.Controllers
         /// Adds a mark to the student.
         /// </summary>
         /// <param name="studentId">Student Id</param>
+        /// <param name="subjectId">Subject Id</param>
         /// <param name="markValue">Mark Value</param>
         [HttpPost("{studentId}/addmark")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(int))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(int))]
-        public IActionResult AddMarkToStudent([FromRoute] int studentId, [FromBody][Range(1, 10)] int markValue)
+        public IActionResult AddMarkToStudent([FromRoute][Range(1,int.MaxValue)] int studentId, int subjectId, [FromBody][Range(1, 10)] int markValue)
         {
             try
             {
-                dataLayer.AddMarkToStudent(studentId, markValue);
+                dataLayer.AddMarkToStudent(subjectId,studentId, markValue);
             }
             catch (EntityNotFoundException e)
             {
@@ -207,7 +210,7 @@ namespace ECatalogueApi.Controllers
             return Ok();
         }
         #endregion
-        #region Delete Method
+    #region Delete Method
         /// <summary>
         /// Deletes a student based on Id.
         /// </summary>
@@ -216,7 +219,7 @@ namespace ECatalogueApi.Controllers
         /// <returns>Removed Student</returns>
         [HttpDelete("{studentId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public IActionResult DeleteStudent([FromRoute] int studentId, [FromQuery] bool deleteAddress)
+        public IActionResult DeleteStudent([FromRoute][Range(1,int.MaxValue)] int studentId, [FromQuery] bool deleteAddress)
         {
             dataLayer.DeleteStudent(studentId, deleteAddress);
             return Ok();
