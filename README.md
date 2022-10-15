@@ -18,9 +18,9 @@ SeedDb Controller: The controller will allow an end user to delete create a data
 
 Student Controller: The controller will allow an end user to get a list of the students / get students by id/ add new students / remove students / add marks / update student data / update student address / get average of marks / get a mark for a subject for a student.
 
-Subject Controller: The controller will allow an end user to create or update a subjct / delete a subject by id.
+Subject Controller: The controller will allow an end user to get all subjects / get subject by id / update a subject / delete a subject by id.
 
-Teacher Controller: The controller will allow an end user to add a teacher / add a subject to a teacher / delete a teacher from system / change address for a teacher / give a teacher a promotion.
+Teacher Controller: The controller will allow an end user to get all teachers / get teacher by id / add a teacher / add a subject to a teacher / delete a teacher from system / change address for a teacher / give a teacher a promotion / return all marks by teacher.
 
 <br>
 <br>
