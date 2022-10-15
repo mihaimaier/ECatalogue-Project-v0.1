@@ -49,25 +49,11 @@ namespace ECatalogueApi.Controllers
             {
                 subject = dataLayer.GetSubjectById(id).ToDto();
             }
-            catch (EntityNotFoundException e)
+            catch (SubjectDoesNotExistException e)
             {
                 return NotFound(e.Message);
             }
             return Ok(subject);
-        }
-        #endregion
-    #region Update Method
-        /// <summary>
-        /// Update a subject.
-        /// </summary>
-        /// <param name="subjectId">Subject Id</param>
-        /// <param name="subject">Subject Data</param>
-        /// <returns>Created subject data.</returns>
-        [HttpPost]
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(List<SubjectToGet>))]
-        public IActionResult AddCourse([FromRoute] int subjectId,[FromBody] SubjectToCreate subject)
-        {
-            return Created("Successfully Updated", dataLayer.AddSubject(subjectId,subject.ToEntity()).ToDto());
         }
         #endregion
     #region Delete Method

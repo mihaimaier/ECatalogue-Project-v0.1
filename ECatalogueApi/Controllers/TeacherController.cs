@@ -51,7 +51,7 @@ namespace ECatalogueApi.Controllers
             {
                 teacher = dataLayer.GetTeacherById(id).ToDto();
             }
-            catch (EntityNotFoundException e)
+            catch (TeacherDoesNotExistException e)
             {
                 return NotFound(e.Message);
             }
@@ -84,45 +84,51 @@ namespace ECatalogueApi.Controllers
             return Created("Successfully created",dataLayer.CreateTeacher(teacherToCreate.ToEntity()).ToDto());
         }
         /// <summary>
-        /// Creates or updates a teacher's subject
+        /// Assigns or updates a subject for a teacher.
         /// </summary>
-        /// <param name="subjectId">Subject Id</param>
-        /// <param name="teacherId">Teacher Id</param>
-        /// <param name="newSubjectName">Subject's name</param>
+        /// <param name="id">Teacher's ID</param>
+        /// <param name="newSubject">Subject's data</param>
         /// <returns>Result</returns>
         [HttpPut("{id}/update/subject")]
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(SubjectToGet))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(SubjectToGet))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
-        public IActionResult ModifyTeacherSubject([FromRoute][Range(1, int.MaxValue)] int subjectId, [FromRoute][Range(1,int.MaxValue)] int teacherId, [FromBody] string newSubjectName)
+        public IActionResult AssignSubject([FromRoute][Range(1, int.MaxValue)] int id, [FromBody] SubjectToCreate newSubject)
         {
             SubjectToGet subject;
             try
             {
-                subject = dataLayer.ModifyTeacherSubject(subjectId,teacherId, newSubjectName).ToDto();
+                subject = dataLayer.AssignTeacherSubject(id, newSubject.ToEntity()).ToDto();
             }
-            catch (EntityNotFoundException e)
+            catch (TeacherDoesNotExistException e)
             {
-                return NotFound(e.Message);
+                return NotFound(e.message);
             }
-            return Created("Successfully updated", subject);
+            return Ok(subject);
         }
         #endregion
-    #region Delete Method
+        #region Delete Method
         /// <summary>
-        /// Delete a teacher from the system.
+        /// Remove a teacher.
         /// </summary>
-        /// <param name="teacherId">Teacher Id</param>
-        /// <param name="deleteAddress">Would you like to delete the teacher's address?</param>
-        /// <param name="deleteSubject">Would you like to delete the teacher's subject?</param>
-        [HttpDelete("{teacherId}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public IActionResult DeleteTeacher([FromRoute][Range(1, int.MaxValue)] int teacherId, [FromQuery] bool deleteAddress, [FromQuery] bool deleteSubject)
+        /// <param name="id">Teacher's ID</param>
+        /// <returns>Result</returns>
+        [HttpDelete("{id}/delete")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
+        public IActionResult RemoveTeacher([FromRoute][Range(1, int.MaxValue)] int id)
         {
-            dataLayer.DeleteTeacher(teacherId, deleteAddress, deleteSubject);
-            return Ok();
+            try
+            {
+                dataLayer.RemoveTeacher(id);
+            }
+            catch (TeacherDoesNotExistException e)
+            {
+                return NotFound(e.message);
+            }
+            return Ok("Successfully removed");
         }
         #endregion
-    #region Change Address For Teacher Method
+        #region Change Address For Teacher Method
         /// <summary>
         /// Change address for a specified teacher.
         /// </summary>
@@ -139,7 +145,7 @@ namespace ECatalogueApi.Controllers
             {
                 dataLayer.ChangeTeacherAddress(teacherId, newAddress.ToEntity());
             }
-            catch (EntityNotFoundException e)
+            catch (TeacherDoesNotExistException e)
             {
                 return NotFound(e.Message);
             }
@@ -148,10 +154,10 @@ namespace ECatalogueApi.Controllers
         #endregion
     #region Promotion Method
         /// <summary>
-        /// Give a teacher a promotion.
+        /// Promote a teacher.
         /// </summary>
         /// <param name="teacherId">Teacher Id</param>
-        /// <returns>Modifed rank for the teacher.</returns>
+        /// <returns>Promoted Teacher..</returns>
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
         [HttpPut("{teacherId}/promotion")]
@@ -161,7 +167,7 @@ namespace ECatalogueApi.Controllers
             {
                 dataLayer.PromoteTeacher(teacherId);
             }
-            catch (EntityNotFoundException e)
+            catch (TeacherDoesNotExistException e)
             {
                 return NotFound(e.Message);
             }

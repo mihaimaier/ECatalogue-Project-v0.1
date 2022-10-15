@@ -41,8 +41,10 @@ namespace ProjectOnlineCatalogue
         {
             var student = ctx.Students.Include(student => student.Address).Where(s => s.Id == studentId).FirstOrDefault();
 
-            if (student == null)
-                return;
+            if (!ctx.Students.Any(s => s.Id == studentId))
+            {
+                throw new StudentDoesNotExistsException(studentId);
+            }
 
             if (!deleteAddress)
             {
@@ -66,9 +68,9 @@ namespace ProjectOnlineCatalogue
         public void ChangeStudentAddress(int studentId, Address newAddress)
         {
             var student = ctx.Students.Include(s => s.Address).FirstOrDefault(s => s.Id == studentId);
-            if (student == null)
+            if (!ctx.Students.Any(s => s.Id == studentId))
             {
-                throw new EntityNotFoundException($"A student with a student id {studentId} was not found");
+                throw new StudentDoesNotExistsException(studentId);
             }
             if (student.Address == null)
             {
@@ -81,30 +83,38 @@ namespace ProjectOnlineCatalogue
             ctx.SaveChanges();
         }
         //Change Student Data
-        public void ChangeStudentData(int studentId, Student newStudentData)
+        public Student ChangeStudentData(int studentId, Student student)
         {
-            var student = ctx.Students.FirstOrDefault(s => s.Id == studentId);
 
-            if (student == null)
+            if (!ctx.Students.Any(s => s.Id == studentId))
             {
-                throw new EntityNotFoundException($"A student with an id {studentId} was not found.");
+                throw new StudentDoesNotExistsException (studentId);
             }
-            student.FirstName = newStudentData.FirstName;
-            student.LastName = newStudentData.LastName;
-            student.Age = newStudentData.Age;
+            Student studentToModify = ctx.Students.First(s => s.Id == studentId);
+
+            studentToModify.FirstName = student.FirstName;
+            studentToModify.LastName = student.LastName;
+            studentToModify.Age = student.Age;
 
             ctx.SaveChanges();
+            return studentToModify;
         }
         // Add Marks to Student
-        public void AddMarkToStudent(int studentId, int subjectId, int markValue)
+        public Mark AddMarkToStudent(Mark newMark)
         {
-            var student = ctx.Students.FirstOrDefault(s => s.Id == studentId);
-            if (student == null)
+            if (!ctx.Students.Any(s => s.Id == newMark.StudentId))
             {
-                throw new EntityNotFoundException($"Student {studentId} is null");
+                throw new StudentDoesNotExistsException(newMark.StudentId);
             }
-            student.Marks.Add(new Mark { SubjectId = subjectId, Value = markValue, CreationDate = DateTime.Now });
+
+            if (!ctx.Subjects.Any(s => s.Id == newMark.SubjectId))
+            {
+                throw new SubjectDoesNotExistException(newMark.SubjectId);
+            }
+
+            ctx.Marks.Add(newMark);
             ctx.SaveChanges();
+            return newMark;
         }
         #endregion
     #region Teacher Methods
@@ -117,44 +127,25 @@ namespace ProjectOnlineCatalogue
             return teacher;
         }
         //Delete Teacher
-        public void DeleteTeacher(int teacherId, bool deleteAddress, bool deleteSubject)
+        public void RemoveTeacher(int teacherId)
         {
-            var teacher = ctx.Teachers.Include(teacher => teacher.Address).Where(s => s.Id == teacherId).FirstOrDefault();
-            if (teacher == null)
-                return;
-            if (!deleteAddress)
+            if (!ctx.Teachers.Any(t => t.Id == teacherId))
             {
-                if (teacher.Address != null)
-                {
-                    teacher.Address.StudentId = null;
-                    teacher.Address = null;
-                }
+                throw new TeacherDoesNotExistException(teacherId);
             }
-            if (!deleteSubject)
-            {
-                if (teacher.Subject != null)
-                {
-                    teacher.Subject = null;
-                }
-            }
-            else
-            {
-                if (teacher.Address != null && teacher.Subject != null)
-                {
-                    ctx.Remove(teacher.Address);
-                    ctx.Remove(teacher.Subject);
-                }
-            }
-            ctx.Remove(teacher);
+            Teacher existingTeacher = ctx.Teachers.Include(t => t.Address).Include(t => t.Subject).First(t => t.Id == teacherId);
+            RemoveSubject(existingTeacher.Subject);
+
+            ctx.Teachers.Remove(existingTeacher);
             ctx.SaveChanges();
         }
         // Change Teacher Address
         public void ChangeTeacherAddress(int teacherId, Address newAddress)
         {
             var teacher = ctx.Teachers.Include(s => s.Address).FirstOrDefault(s => s.Id == teacherId);
-            if (teacher == null)
+            if (!ctx.Teachers.Any(t => t.Id == teacherId))
             {
-                throw new EntityNotFoundException($"A teacher with a teacher id {teacherId} was not found");
+                throw new TeacherDoesNotExistException(teacherId);
             }
             if (teacher.Address == null)
             {
@@ -166,28 +157,21 @@ namespace ProjectOnlineCatalogue
 
             ctx.SaveChanges();
         }
-        // Modify Teacher Subject
-        public Subject ModifyTeacherSubject(int subjectId,int teacherId, string newSubjectName)
-        {
-            if (!ctx.Teachers.Any(t => t.Id == teacherId))
-            {
-                throw new EntityNotFoundException(teacherId);
-            }
-
-            Subject newSubject = new Subject { Name = newSubjectName, TeacherId = teacherId };
-            return AddSubject(subjectId,newSubject);
-        }
         //Promotion of Teacher
         public void PromoteTeacher(int teacherId)
         {
             var teacher = ctx.Teachers.FirstOrDefault(s => s.Id == teacherId);
-            if (teacher == null)
+            if (!ctx.Teachers.Any(t => t.Id == teacherId))
             {
-                throw new EntityNotFoundException($"Teacher {teacherId} is null");
+                throw new TeacherDoesNotExistException(teacherId);
             }
-            if(teacher != null)
+            if (teacher != null)
             {
                 teacher.Rank++;
+            }
+            if(teacher.Rank == Rank.Professor)
+            {
+                _ = teacher.Rank;
             }
             ctx.SaveChanges();
         }
@@ -210,6 +194,7 @@ namespace ProjectOnlineCatalogue
             }
             return ctx.Teachers.Include(t => t.Address).Include(t => t.Subject).First(t => t.Id == teacherId);
         }
+
         #endregion
     #region Subject Methods
         // Get All Subjects
@@ -222,7 +207,7 @@ namespace ProjectOnlineCatalogue
         {
             if (!ctx.Subjects.Any(s => s.Id == subjectId))
             {
-                throw new EntityNotFoundException(subjectId);
+                throw new SubjectDoesNotExistException(subjectId);
             }
             return ctx.Subjects.First(s => s.Id == subjectId);
         }
@@ -240,32 +225,30 @@ namespace ProjectOnlineCatalogue
             ctx.Remove(subject);
             ctx.SaveChanges();
         }
-        // Add Subject
-        public Subject AddSubject(int subjectId, Subject newSubjectToCreate)
+        // Assign or Update a Subject
+        public Subject AssignTeacherSubject(int teacherId, Subject newSubject)
         {
-            var existingSubject = ctx.Subjects.FirstOrDefault(s => s.Name == newSubjectToCreate.Name);
-            if (existingSubject != null)
+            if (!ctx.Teachers.Any(t => t.Id == teacherId))
             {
-                throw new EntityAlreadyExists($"Subject {newSubjectToCreate} already exists");
+                throw new TeacherDoesNotExistException(teacherId);
             }
-            var newSubject = new Subject { Name = newSubjectToCreate.Name };
-            ctx.Subjects.Add(newSubject);
+
+            Teacher existingTeacher = ctx.Teachers.Include(t => t.Subject).First(t => t.Id == teacherId);
+            RemoveSubject(existingTeacher.Subject);
+
+            existingTeacher.Subject = newSubject;
             ctx.SaveChanges();
             return newSubject;
         }
-
-        //Assign Subject to Teacher
-        public Subject AddSubjectToTeacher(int teacherId, Subject subjectToAdd)
+        //Remove Subject
+        private void RemoveSubject(Subject subject)
         {
-            var teacher = ctx.Teachers.FirstOrDefault(s => s.Id == teacherId);
-            if(teacher == null)
+            if (subject != null)
             {
-                throw new EntityNotFoundException($"Teacher {teacherId} is null");
+                ctx.Marks.RemoveRange(ctx.Marks.Where(m => m.SubjectId == subject.Id));
+                ctx.Subjects.Remove(subject);
             }
-            var subject = new Subject { Name = subjectToAdd.Name };
-            ctx.Add(subject);
-            ctx.SaveChanges();
-            return subject;
+
         }
     }
 }

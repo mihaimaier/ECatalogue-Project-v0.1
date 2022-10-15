@@ -41,6 +41,16 @@ namespace ECatalogueApi.Extensions
             Name = teacherToCreate.Name,
             Rank = teacherToCreate.Rank,
         };
+        public static Mark ToEntity(this MarksToCreate mark)
+        {
+            return new Mark
+            {
+                Value = mark.Value,
+                StudentId = mark.StudentId,
+                SubjectId = mark.SubjectId,
+                CreationDate = DateTime.Now
+            };
+        }
     }
 }
 

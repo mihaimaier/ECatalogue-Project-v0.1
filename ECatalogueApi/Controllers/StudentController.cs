@@ -49,7 +49,7 @@ namespace ECatalogueApi.Controllers
             var student = dataLayer.GetStudentById(studentId);
             if (student == null)
             {
-                return NotFound("Student Not Found");
+                return NotFound($"Student With ID: {studentId} not found.");
             }
             return Ok(student.ToDto());
         }
@@ -61,14 +61,14 @@ namespace ECatalogueApi.Controllers
         /// <returns>List of Marks</returns>
         [HttpGet("{studentId}/marks")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<MarkToGet>))]
-        public IActionResult GetAllMarks([FromRoute][Range(1, int.MaxValue)] int studentId, [FromQuery][Range(1, int.MaxValue)] int? subjectId)
+        public IActionResult GetAllMarks([FromRoute][Range(1, int.MaxValue)] int studentId, [FromQuery][Optional][Range(1, int.MaxValue)] int subjectId)
         {
             var student = context.Students.Include(s => s.Marks).FirstOrDefault(s => s.Id == studentId);
             if (student == null)
             {
-                return NotFound();
+                return NotFound($"Student with ID: {studentId} not found");
             }
-            if (subjectId == null)
+            if (subjectId != null)
             {
                 return Ok(student.Marks.Select(m => m.ToDto()).ToList());
             }
@@ -77,7 +77,6 @@ namespace ECatalogueApi.Controllers
                 return Ok(student.Marks.Where(m => m.SubjectId == subjectId).Select(m => m.ToDto()).ToList());
             }
         }
-
         /// <summary>
         /// Gets average per subject for a student.
         /// </summary>
@@ -100,7 +99,7 @@ namespace ECatalogueApi.Controllers
         /// <summary>
         /// Gets the students marks ordered by the average.
         /// </summary>
-        /// <param name="order">Order decending(Select True) / Order ascending (Select False)</param>
+        /// <param name="order">Descending Order(Select True) / Ascending Order (Select False)</param>
         /// <returns></returns>
         [HttpGet("all/orderByAverage")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<StudentWithAverageToGet>))]
@@ -130,11 +129,13 @@ namespace ECatalogueApi.Controllers
         }
         #endregion
     #region Update Methods
+
         /// <summary>
-        /// Updates student's data.
+        /// Update student data.
         /// </summary>
-        /// <param name="studentId">Insert ID of Student To Modify</param>
-        /// <param name="newStudentData">New Student Information</param>
+        /// <param name="studentId">Student Id</param>
+        /// <param name="newStudentData">Student Data</param>
+        /// <returns>Updated student data.</returns>
         [HttpPut("{studentId}")]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(List<StudentToGet>))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
@@ -144,7 +145,7 @@ namespace ECatalogueApi.Controllers
             {
                 dataLayer.ChangeStudentData(studentId, newStudentData.ToEntity());
             }
-            catch (EntityNotFoundException e)
+            catch (StudentDoesNotExistsException e)
             {
                 return NotFound(e.Message);
             }
@@ -167,7 +168,7 @@ namespace ECatalogueApi.Controllers
             {
                 dataLayer.ChangeStudentAddress(studentId, newAddress.ToEntity());
             }
-            catch (EntityNotFoundException e)
+            catch (StudentDoesNotExistsException e)
             {
                 return NotFound(e.Message);
             }
@@ -187,27 +188,30 @@ namespace ECatalogueApi.Controllers
         {
             return Created("Successfully Created",dataLayer.CreateStudent(studentToCreate.ToEntity()).ToDto());
         }
-
         /// <summary>
-        /// Adds a mark to the student.
+        /// Add a mark to a student.
         /// </summary>
-        /// <param name="studentId">Student Id</param>
-        /// <param name="subjectId">Subject Id</param>
-        /// <param name="markValue">Mark Value</param>
-        [HttpPost("{studentId}/addmark")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(int))]
-        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(int))]
-        public IActionResult AddMarkToStudent([FromRoute][Range(1,int.MaxValue)] int studentId, int subjectId, [FromBody][Range(1, 10)] int markValue)
+        /// <param name="newMark">Mark Data</param>
+        /// <returns>Result</returns>
+        [HttpPost("marks/create")]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(MarkToGet))]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
+        public IActionResult AddMarkToStudent([FromBody] MarksToCreate newMark)
         {
+            MarkToGet mark;
             try
             {
-                dataLayer.AddMarkToStudent(subjectId,studentId, markValue);
+                mark = dataLayer.AddMarkToStudent(newMark.ToEntity()).ToDto();
             }
-            catch (EntityNotFoundException e)
+            catch (StudentDoesNotExistsException e)
             {
-                return NotFound(e.Message);
+                return NotFound(e.message);
             }
-            return Ok();
+            catch (SubjectDoesNotExistException e)
+            {
+                return NotFound(e.message);
+            }
+            return Created("Mark Sucessfully Added", mark);
         }
         #endregion
     #region Delete Method
@@ -219,10 +223,18 @@ namespace ECatalogueApi.Controllers
         /// <returns>Removed Student</returns>
         [HttpDelete("{studentId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
         public IActionResult DeleteStudent([FromRoute][Range(1,int.MaxValue)] int studentId, [FromQuery] bool deleteAddress)
         {
-            dataLayer.DeleteStudent(studentId, deleteAddress);
-            return Ok();
+            try
+            {
+                dataLayer.DeleteStudent(studentId, deleteAddress);
+            }
+            catch (StudentDoesNotExistsException e)
+            {
+                return NotFound(e.message);
+            }
+            return Ok("Student Successfully Removed.");
         }
     }
 }
